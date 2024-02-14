@@ -1,10 +1,12 @@
 package com.example.servicestest
 
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
@@ -23,6 +25,9 @@ class MyForegroundService : Service() {
         createNotificationBuilder()
     }
 
+    var onProgressChanged: ((Int) -> Unit)? = null
+
+    @SuppressLint("ForegroundServiceType")
     override fun onCreate() {
         super.onCreate()
         log("onCreate")
@@ -39,6 +44,7 @@ class MyForegroundService : Service() {
                     .setProgress(100, i, false)
                     .build()
                 notificationManager.notify(NOTIFICATION_ID, notification)
+                onProgressChanged?.invoke(i)
                 log("Timer $i")
             }
             stopSelf()
@@ -52,8 +58,9 @@ class MyForegroundService : Service() {
         log("onDestroy")
     }
 
-    override fun onBind(intent: Intent?): IBinder? {
-        TODO("Not yet implemented")
+    override fun onBind(intent: Intent?): IBinder {
+        log("onBind")
+        return LocalBinder()
     }
 
     private fun log(message: String) {
@@ -77,6 +84,11 @@ class MyForegroundService : Service() {
         .setSmallIcon(R.drawable.ic_launcher_background)
         .setProgress(100, 0, false)
         .setOnlyAlertOnce(true)
+
+    inner class LocalBinder : Binder() {
+
+        fun getService() = this@MyForegroundService
+    }
 
     companion object {
 
